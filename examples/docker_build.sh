@@ -29,7 +29,9 @@ if ! [ -z "$(git status --porcelain)" ]; then
   exit 1
 fi
 
+pushd ..
 mvn install
+popd
 
 docker build --pull --no-cache=${no_cache} -t "$registry/teastore-base:${tag}" ../utilities/tools.descartes.teastore.dockerbase/
 if [[ "$latest" == "true" ]]; then
