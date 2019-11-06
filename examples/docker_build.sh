@@ -30,7 +30,7 @@ if ! [ -z "$(git status --porcelain)" ]; then
 fi
 
 pushd ..
-mvn install -DskipTests
+mvn install -amd -DskipTests
 popd
 
 docker build --pull --no-cache=${no_cache} -t "$registry/teastore-base:${tag}" ../utilities/tools.descartes.teastore.dockerbase/
