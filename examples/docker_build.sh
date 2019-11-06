@@ -1,36 +1,49 @@
 #!/bin/bash
 push_flag='false'
 registry='descartesresearch'
+latest='false'
+tag="$(git branch --show-current)-$(git rev-parse --short HEAD)"
 
 print_usage() {
-  printf "Usage: docker_build.sh [-p] [-r REGISTRY_NAME]\n"
+  printf "Usage: docker_build.sh [-p] [-r REGISTRY_NAME] [-t tag] [-l]\n"
 }
 
 while getopts 'pr:' flag; do
   case "${flag}" in
     p) push_flag='true' ;;
+    l) latest='true' ;;
+    t) tag="${OPTARG}" ;;
     r) registry="${OPTARG}" ;;
     *) print_usage
        exit 1 ;;
   esac
 done
 
-docker build --no-cache=true -t "$registry/teastore-base" ../utilities/tools.descartes.teastore.dockerbase/
-perl -i -pe's|.*FROM descartesresearch/|FROM '"$registry"'/|g' ../services/tools.descartes.teastore.*/Dockerfile
-docker build -t "$registry/teastore-registry" ../services/tools.descartes.teastore.registry/
-docker build -t "$registry/teastore-persistence" ../services/tools.descartes.teastore.persistence/
-docker build -t "$registry/teastore-image" ../services/tools.descartes.teastore.image/
-docker build -t "$registry/teastore-webui" ../services/tools.descartes.teastore.webui/
-docker build -t "$registry/teastore-auth" ../services/tools.descartes.teastore.auth/
-docker build -t "$registry/teastore-recommender" ../services/tools.descartes.teastore.recommender/
-perl -i -pe's|.*FROM '"$registry"'/|FROM descartesresearch/|g' ../services/tools.descartes.teastore.*/Dockerfile
+if ! [ -z "$(git status --porcelain)" ]; then
+  printf "ERROR Git repo status not clean (uncommitted changes or files) so refusing to build Docker images\n"
+  exit 1
+fi
+
+docker build --no-cache=true -t "$registry/teastore-base:${tag}" ../utilities/tools.descartes.teastore.dockerbase/
+if [[ "$latest" == "true" ]]; then
+  docker tag "${registry}/teastore-base:${tag}" "${registry}/teastore-base:latest"
+fi
+
+for service in registry persistence image webui auth recommender; do
+  perl -i -pe's|.*FROM descartesresearch/teastore-base.*|FROM '"$registry/teastore-base:${tag}"'/|g' ../services/tools.descartes.teastore.${service}/Dockerfile
+  docker build -t "${registry}/teastore-${service}:${tag}" ../services/tools.descartes.teastore.${service}/
+  if [[ "$latest" == "true" ]]; then
+    docker tag "${registry}/teastore-${service}:${tag}" "${registry}/teastore-${service}:latest"
+  fi
+  # Safe to checkout since we are sure that no uncommitted changes can be present in repo
+  git checkout -- ../services/tools.descartes.teastore.${service}/Dockerfile
+done
 
 if [ "$push_flag" = 'true' ]; then
-  docker push "$registry/teastore-base"
-  docker push "$registry/teastore-registry"
-  docker push "$registry/teastore-persistence"
-  docker push "$registry/teastore-image"
-  docker push "$registry/teastore-webui"
-  docker push "$registry/teastore-auth"
-  docker push "$registry/teastore-recommender"
+  for image in base registry persistence image webui auth recommender; do
+    docker push "${registry}/teastore-${image}:${tag}"
+    if [[ "$latest" == "true" ]]; then
+      docker push "${registry}/teastore-${image}:latest"
+    fi
+  done
 fi
