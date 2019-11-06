@@ -12,7 +12,7 @@ print_usage() {
   printf "Usage: docker_build.sh [-p] [-r REGISTRY_NAME] [-t tag] [-l]\n"
 }
 
-while getopts 'pr:' flag; do
+while getopts 'npltr:' flag; do
   case "${flag}" in
     n) no_cache="true" ;;
     p) push_flag='true' ;;
