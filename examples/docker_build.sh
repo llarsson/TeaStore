@@ -30,7 +30,7 @@ if [[ "$latest" == "true" ]]; then
 fi
 
 for service in registry persistence image webui auth recommender; do
-  perl -i -pe's|.*FROM descartesresearch/teastore-base.*|FROM '"$registry/teastore-base:${tag}"'/|g' ../services/tools.descartes.teastore.${service}/Dockerfile
+  perl -i -pe's|.*FROM descartesresearch/teastore-base.*|FROM '"$registry/teastore-base:${tag}"'|g' ../services/tools.descartes.teastore.${service}/Dockerfile
   docker build -t "${registry}/teastore-${service}:${tag}" ../services/tools.descartes.teastore.${service}/
   if [[ "$latest" == "true" ]]; then
     docker tag "${registry}/teastore-${service}:${tag}" "${registry}/teastore-${service}:latest"
