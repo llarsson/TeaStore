@@ -1,7 +1,11 @@
 #!/bin/bash
+
+set -euo pipefail
+
 push_flag='false'
 registry='descartesresearch'
 latest='false'
+no_cache='false'
 tag="$(git branch --show-current)-$(git rev-parse --short HEAD)"
 
 print_usage() {
@@ -10,6 +14,7 @@ print_usage() {
 
 while getopts 'pr:' flag; do
   case "${flag}" in
+    n) no_cache="true" ;;
     p) push_flag='true' ;;
     l) latest='true' ;;
     t) tag="${OPTARG}" ;;
@@ -24,7 +29,7 @@ if ! [ -z "$(git status --porcelain)" ]; then
   exit 1
 fi
 
-docker build --no-cache=true -t "$registry/teastore-base:${tag}" ../utilities/tools.descartes.teastore.dockerbase/
+docker build --no-cache=${no_cache} -t "$registry/teastore-base:${tag}" ../utilities/tools.descartes.teastore.dockerbase/
 if [[ "$latest" == "true" ]]; then
   docker tag "${registry}/teastore-base:${tag}" "${registry}/teastore-base:latest"
 fi
