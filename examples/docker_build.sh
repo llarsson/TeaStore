@@ -29,7 +29,7 @@ if ! [ -z "$(git status --porcelain)" ]; then
   exit 1
 fi
 
-docker build --no-cache=${no_cache} -t "$registry/teastore-base:${tag}" ../utilities/tools.descartes.teastore.dockerbase/
+docker build --pull --no-cache=${no_cache} -t "$registry/teastore-base:${tag}" ../utilities/tools.descartes.teastore.dockerbase/
 if [[ "$latest" == "true" ]]; then
   docker tag "${registry}/teastore-base:${tag}" "${registry}/teastore-base:latest"
 fi
