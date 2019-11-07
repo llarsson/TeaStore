@@ -8,3 +8,4 @@ Servers/
 services/tools.descartes.petstore.image/test/
 limbo_checkstyle.out.xml
 target/
+tags
